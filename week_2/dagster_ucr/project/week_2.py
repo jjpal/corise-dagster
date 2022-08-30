@@ -42,7 +42,6 @@ def put_redis_data(context, agg_gv_stock):
         str(agg_gv_stock.date), str(agg_gv_stock.high)
     )
 
-
 @graph
 def week_2_pipeline():
     # Use your graph from week 1

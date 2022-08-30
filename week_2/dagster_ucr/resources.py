@@ -7,7 +7,6 @@ import redis
 import sqlalchemy
 from dagster import Field, Int, String, resource
 
-
 # Clients
 class Postgres:
     def __init__(self, host: str, user: str, password: str, database: str):
