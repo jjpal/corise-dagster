@@ -89,7 +89,7 @@ docker = {
 @static_partitioned_config(partition_keys=[str(num) for num in range(1, 11)])
 def docker_config(partition_key: str):
     updated_docker_op = docker
-    updated_docker_op["ops"] = ["get_s3_data"]["config"]["s3_key"]= f"prefix/stock_{partition_key}.csv"
+    updated_docker_op["ops"]["get_s3_data"]["config"]["s3_key"]= f"prefix/stock_{partition_key}.csv"
     return updated_docker_op
 
 local_week_3_pipeline = week_3_pipeline.to_job(
@@ -99,6 +99,7 @@ local_week_3_pipeline = week_3_pipeline.to_job(
         "s3": mock_s3_resource,
         "redis": ResourceDefinition.mock_resource(),
     },
+    op_retry_policy=RetryPolicy(max_retries=10, delay=1),
 )
 
 docker_week_3_pipeline = week_3_pipeline.to_job(
@@ -114,9 +115,9 @@ docker_week_3_pipeline = week_3_pipeline.to_job(
 
 # Add your schedule
 
-local_week_3_schedule = ScheduleDefinition(job=local_week_3_pipeline.to_job, cron_schedule="*/15 * * * *")
+local_week_3_schedule = ScheduleDefinition(job=local_week_3_pipeline, cron_schedule="*/15 * * * *")
 
-docker_week_3_schedule = ScheduleDefinition(job=docker_week_3_pipeline.to_job, cron_schedule="0 * * * *")
+docker_week_3_schedule = ScheduleDefinition(job=docker_week_3_pipeline, cron_schedule="0 * * * *")
 
 #  create a sensor for the docker_week_3_pipeline
 
@@ -128,7 +129,7 @@ def docker_week_3_sensor(context):
         endpoint_url="http://localstack:4566"
     )
     if not new_s3_keys:
-        yield SkipReason("No new S3 files found in bucket")
+        yield SkipReason("No new s3 files found in bucket.")
         return
         
     for new_s3_key in new_s3_keys:
