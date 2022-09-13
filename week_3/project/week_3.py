@@ -87,10 +87,27 @@ docker = {
 
 
 @static_partitioned_config(partition_keys=[str(num) for num in range(1, 11)])
-def docker_config(partition_key: str):
-    updated_docker_op = docker
-    updated_docker_op["ops"]["get_s3_data"]["config"]["s3_key"]= f"prefix/stock_{partition_key}.csv"
-    return updated_docker_op
+def docker_config(partition_key: str):    
+    return {
+        "resources": {
+        "s3": {
+            "config": {
+                "bucket": "dagster",
+                "access_key": "test",
+                "secret_key": "test",
+                "endpoint_url": "http://localstack:4566",
+            }
+        },
+        "redis": {
+            "config": {
+                "host": "redis",
+                "port": 6379,
+            }
+        },
+    },
+
+    "ops":{"get_s3_data": {"config":{"s3_key": f"prefix/stock_{partition_key}.csv"}}},
+    }
 
 local_week_3_pipeline = week_3_pipeline.to_job(
     name="local_week_3_pipeline",
@@ -99,7 +116,6 @@ local_week_3_pipeline = week_3_pipeline.to_job(
         "s3": mock_s3_resource,
         "redis": ResourceDefinition.mock_resource(),
     },
-    op_retry_policy=RetryPolicy(max_retries=10, delay=1),
 )
 
 docker_week_3_pipeline = week_3_pipeline.to_job(
